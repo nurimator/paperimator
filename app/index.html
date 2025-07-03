@@ -2,28 +2,30 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Editor Gambar dengan Efek SVG - Tema Lancip</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper by Nurimator – Turn Images into Crumpled & Torn Paper Effects</title>
+    <meta name="description" content="Create crumpled and torn paper effects from your images. Paper by Nurimator lets you design dramatic paper-style visuals directly in your browser.">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/ccapture.js-npmfixed/build/CCapture.all.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             font-family: 'Inter', sans-serif;
-            --bg-dark: #0f172a;
-            --bg-panel: #243143;
-            --bg-header: #283649;
+            --bg-dark: #0b101b;
+            --bg-panel: #141a22;
+            --bg-header: #222c3b;
             --border-color: #334155;
             --border-color-light: #475569;
             --text-primary: #f8fafc;
             --text-secondary: #e2e8f0;
             --text-muted: #94a3b8;
-            --accent-color: #3b82f6;
-            --accent-color-hover: #2563eb;
-            --danger-color: #ef4444;
-            --danger-color-hover: #dc2626;
+            --accent-color: #1d5fca;
+            --accent-color-hover: #174ab8;
+            --danger-color: #e12d2d;
+            --danger-color-hover: #b91919;
             --red-accent-bg: #fee2e2;
-            --red-accent-text: #ef4444;
+            --red-accent-text: #af1717;
             --red-accent-border: #fca5a5;
         }
         body {
@@ -920,10 +922,10 @@
             // URLs for overlay images from GitHub repository. 
             // Replace with your actual repo URLs.
             const overlayImageUrls = [
-                'https://raw.githubusercontent.com/nurimator/paperimator/refs/heads/main/img/paper1.webp',
-                'https://raw.githubusercontent.com/nurimator/paperimator/refs/heads/main/img/paper2.webp',
-                'https://raw.githubusercontent.com/nurimator/paperimator/refs/heads/main/img/paper3.webp',
-                'https://raw.githubusercontent.com/nurimator/paperimator/refs/heads/main/img/paper4.webp'
+                '/img/paper1.webp',
+                '/img/paper2.webp',
+                '/img/paper3.webp',
+                '/img/paper4.webp'
             ];
             
             let originalOverlayImages = []; 
