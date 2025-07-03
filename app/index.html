@@ -2052,7 +2052,6 @@
                 overlayImageUrls.forEach((url, index) => {
                     const img = new Image();
                     // Required for loading images from another domain into a canvas without tainting it
-                    img.crossOrigin = "Anonymous"; 
                     img.onload = () => {
                         originalOverlayImages[index] = img;
                         loadedOriginalOverlays++;
