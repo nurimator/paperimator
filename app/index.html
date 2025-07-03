@@ -12,20 +12,20 @@
     <style>
         :root {
             font-family: 'Inter', sans-serif;
-            --bg-dark: #0b101b;
-            --bg-panel: #141a22;
-            --bg-header: #1c2532;
+            --bg-dark: #0f172a;
+            --bg-panel: #243143;
+            --bg-header: #283649;
             --border-color: #334155;
             --border-color-light: #475569;
             --text-primary: #f8fafc;
             --text-secondary: #e2e8f0;
             --text-muted: #94a3b8;
-            --accent-color: #1d5fca;
-            --accent-color-hover: #174ab8;
-            --danger-color: #e12d2d;
-            --danger-color-hover: #b91919;
+            --accent-color: #3b82f6;
+            --accent-color-hover: #2563eb;
+            --danger-color: #ef4444;
+            --danger-color-hover: #dc2626;
             --red-accent-bg: #fee2e2;
-            --red-accent-text: #af1717;
+            --red-accent-text: #ef4444;
             --red-accent-border: #fca5a5;
         }
         body {
@@ -536,6 +536,17 @@
                     <div class="flex items-center justify-between">
                         <h2 class="text-lg font-bold text-slate-300" data-translate-key="objectImage"></h2>
                     </div>
+                    <!-- NEW: Object Selector -->
+                    <div>
+                        <label class="text-sm font-medium text-[var(--text-muted)]" data-translate-key="activeObject"></label>
+                        <div id="object-selector-btns" class="grid grid-cols-4 gap-2 md:gap-2 mt-2 btn-group-toggle">
+                           <button data-index="0" class="p-2.5 px-2 py-1.5 border-2 border-[var(--border-color)] text-[var(--text-muted)] text-sm font-medium transition-all duration-150 active">1</button>
+                           <button data-index="1" class="p-2.5 px-2 py-1.5 border-2 border-[var(--border-color)] text-[var(--text-muted)] text-sm font-medium transition-all duration-150">2</button>
+                           <button data-index="2" class="p-2.5 px-2 py-1.5 border-2 border-[var(--border-color)] text-[var(--text-muted)] text-sm font-medium transition-all duration-150">3</button>
+                           <button data-index="3" class="p-2.5 px-2 py-1.5 border-2 border-[var(--border-color)] text-[var(--text-muted)] text-sm font-medium transition-all duration-150">4</button>
+                        </div>
+                    </div>
+
                     <!-- Object Image Upload -->
                     <label for="image-upload" id="drop-zone" class="group relative flex flex-col items-center justify-center w-full h-32 md:h-32 px-4 md:px-4 py-2 md:py-2 border-2 border-dashed border-[var(--border-color)] cursor-pointer transition-colors">
                         <div id="drop-zone-prompt" class="flex flex-col items-center justify-center pointer-events-none w-full h-full">
@@ -773,7 +784,7 @@
                              <button data-lang="en" class="p-2.5 px-2 py-1.5 border-2 border-[var(--border-color)] text-[var(--text-muted)] text-sm font-medium transition-all duration-150">English</button>
                              <button data-lang="id" class="p-2.5 px-2 py-1.5 border-2 border-[var(--border-color)] text-[var(--text-muted)] text-sm font-medium transition-all duration-150">Indonesia</button>
                          </div>
-                    </div>
+                 </div>
                     <div class="space-y-2 md:space-y-2 pt-4 border-t border-[var(--border-color)]">
                         <h2 class="text-lg font-bold text-slate-300" data-translate-key="displayMode"></h2>
                         <div id="display-mode-btns" class="flex flex-col gap-2 mt-2 btn-group-toggle">
@@ -919,13 +930,12 @@
             const tornDisplacement = document.getElementById('torn-displacement');
             const tornFlood = document.getElementById('torn-flood');
 
-            // URLs for overlay images from GitHub repository. 
-            // Replace with your actual repo URLs.
+            // URLs for overlay images from GitHub repository.
             const overlayImageUrls = [
-                '/img/paper1.webp',
-                '/img/paper2.webp',
-                '/img/paper3.webp',
-                '/img/paper4.webp'
+                'https://raw.githubusercontent.com/nurimator/paperimator/refs/heads/main/img/paper1.webp',
+                'https://raw.githubusercontent.com/nurimator/paperimator/refs/heads/main/img/paper2.webp',
+                'https://raw.githubusercontent.com/nurimator/paperimator/refs/heads/main/img/paper3.webp',
+                'https://raw.githubusercontent.com/nurimator/paperimator/refs/heads/main/img/paper4.webp'
             ];
             
             let originalOverlayImages = []; 
@@ -940,26 +950,10 @@
             let animationFrameId = null;
             let needsRedraw = true; // Flag to optimize rendering
 
-            // Default state for all settings
-            const DEFAULT_STATE = {
-                activeTab: 'background',
-                language: 'en',
-                displayMode: 'auto', 
-                uiSize: 'normal',
-                background: {
-                    element: null, color: '#00ff00', file: null,
-                    transform: { enabled: true, mode: 'fill', size: 100, offset: { x: 0, y: 0 } },
-                    effects: {
-                        colorCorrection: { enabled: false, hue: 0, saturation: 0, brightness: 0, colorize: false },
-                        blur: { enabled: false, intensity: 10 },
-                        vignette: { enabled: false, opacity: 100, radius: 0, feather: 100, color: '#000000' }
-                    }
-                },
-                aspectRatio: '16/9',
-                canvasDisplayResolution: 720,
-                export: {
-                    duration: 5, fps: 24, filename: 'animasi-sobek'
-                },
+            const MAX_OBJECTS = 4;
+
+            // Default state for a single object
+            const DEFAULT_OBJECT_STATE = {
                 image: { element: null, size: 80, offset: { x: 0, y: 0 }, file: null },
                 stroke: { enabled: true, width: 10, roughness: 25, detail: 0.020 },
                 shadow: { enabled: true, offsetX: 5, offsetY: 5, blur: 5, color: '#000000', opacity: 50 },
@@ -986,6 +980,30 @@
                     blendMode: 'multiply',
                     lastImageSwitchTime: 0
                 }
+            };
+
+            // Default state for the entire application
+            const DEFAULT_STATE = {
+                activeTab: 'background',
+                activeObjectIndex: 0,
+                language: 'en',
+                displayMode: 'auto', 
+                uiSize: 'normal',
+                background: {
+                    element: null, color: '#00ff00', file: null,
+                    transform: { enabled: true, mode: 'fill', size: 100, offset: { x: 0, y: 0 } },
+                    effects: {
+                        colorCorrection: { enabled: false, hue: 0, saturation: 0, brightness: 0, colorize: false },
+                        blur: { enabled: false, intensity: 10 },
+                        vignette: { enabled: false, opacity: 100, radius: 0, feather: 100, color: '#000000' }
+                    }
+                },
+                aspectRatio: '16/9',
+                canvasDisplayResolution: 720,
+                export: {
+                    duration: 5, fps: 24, filename: 'animasi-sobek'
+                },
+                objects: Array.from({ length: MAX_OBJECTS }, () => JSON.parse(JSON.stringify(DEFAULT_OBJECT_STATE)))
             };
 
             let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -1026,13 +1044,14 @@
                     resetAll: 'Reset All', exportSettings: 'Export Settings', fps: 'Frames per Second (FPS)', duration: 'Duration (seconds)',
                     fileName: 'File Name', cancel: 'Cancel', startExport: 'Start Export', exportingVideo: 'Exporting Video...',
                     creatorInfo2: 'This app was created by Nurhidayat and is completely free to use.<br>If you find it useful, your support through donations is greatly appreciated.<br>YouTube: @nurimator | Instagram: @nurimator',
-					exportingVideoWait: 'Please wait and do not close this window.', confirmResetTitle: 'Confirm Reset',
+                    exportingVideoWait: 'Please wait and do not close this window.', confirmResetTitle: 'Confirm Reset',
                     confirmResetMessage: 'Are you sure you want to reset all settings to their default values?',
                     deleteImportedImages: 'Delete imported images', continue: 'Continue',
                     notificationWarnUpload: 'Please upload an image first!',
                     notificationWarnBg: 'Upload a background image first to adjust its settings.',
                     notificationWarnObject: 'Upload an object image first to adjust its settings.',
                     tabTitleBackground: 'Background Settings', tabTitleObject: 'Object Settings', tabTitleInfo: 'Preferences',
+                    activeObject: 'Active Object'
                 },
                 'id': {
                     settings: 'Pengaturan', export: 'Ekspor', canvas: 'Kanvas', previewAspectRatio: 'Aspek Rasio',
@@ -1060,7 +1079,7 @@
                     creatorInfo: 'Informasi Kreator', donateLocal: 'Donasi Lokal [IDR]', donateGlobal: 'Donasi Global [USD]',
                     resetAll: 'Reset Semua', exportSettings: 'Pengaturan Ekspor', fps: 'Frame per Detik (FPS)', duration: 'Durasi (detik)',
                     fileName: 'Nama File', cancel: 'Batal', startExport: 'Mulai Ekspor', exportingVideo: 'Mengekspor Video...',
-					creatorInfo2: 'Aplikasi ini dibuat oleh Nurhidayat dan sepenuhnya gratis untuk digunakan.<br>Jika kamu merasa aplikasi ini bermanfaat, dukungan dalam bentuk donasi sangat diapresiasi.<br>YouTube: @nurimator | Instagram: @nurimator',
+                    creatorInfo2: 'Aplikasi ini dibuat oleh Nurhidayat dan sepenuhnya gratis untuk digunakan.<br>Jika kamu merasa aplikasi ini bermanfaat, dukungan dalam bentuk donasi sangat diapresiasi.<br>YouTube: @nurimator | Instagram: @nurimator',
                     exportingVideoWait: 'Harap tunggu dan jangan tutup jendela ini.', confirmResetTitle: 'Konfirmasi Reset',
                     confirmResetMessage: 'Apakah Anda yakin ingin mereset semua pengaturan ke nilai default?',
                     deleteImportedImages: 'Hapus gambar yang telah diimpor', continue: 'Lanjutkan',
@@ -1068,14 +1087,12 @@
                     notificationWarnBg: 'Masukan gambar latar terlebih dahulu untuk mengaturnya.',
                     notificationWarnObject: 'Masukan gambar objek terlebih dahulu untuk mengaturnya.',
                     tabTitleBackground: 'Pengaturan Latar', tabTitleObject: 'Pengaturan Objek', tabTitleInfo: 'Preferensi',
+                    activeObject: 'Objek Aktif'
                 }
             };
             
             /**
              * Converts a HEX color to an RGBA string.
-             * @param {string} hex - The hex color code (e.g., '#RRGGBB').
-             * @param {number} opacity - The opacity value (0 to 1).
-             * @returns {string} The RGBA color string.
              */
             function hexToRgba(hex, opacity) {
                 let r = 0, g = 0, b = 0;
@@ -1093,12 +1110,13 @@
             function requestRedraw() { needsRedraw = true; }
             
             /**
-             * The main drawing function. Renders the background, object, and all effects onto the canvas.
+             * The main drawing function. Renders the background, all objects, and all effects onto the canvas.
              */
             function draw() {
                 ctx.save();
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
+                // --- DRAW BACKGROUND ---
                 let bgFilterString = '';
                 const bgCC = state.background.effects.colorCorrection;
                 if (bgCC.enabled) {
@@ -1136,6 +1154,7 @@
                 }
                 ctx.restore();
 
+                // Draw background vignette if enabled
                 if (state.background.effects.vignette.enabled) {
                     ctx.save();
                     const gradient = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height) / 2);
@@ -1149,206 +1168,216 @@
                     ctx.restore();
                 }
 
-                if (!state.image.element) return;
-                
-                const canvasAspect = canvas.width / canvas.height;
-                const imageAspect = state.image.element.width / state.image.element.height;
-                let baseScale = (canvasAspect > imageAspect) ? canvas.height / state.image.element.height : canvas.width / state.image.element.width;
-                const userScale = state.image.size / 100;
-                const finalScale = baseScale * userScale;
-                const imgW = state.image.element.width * finalScale;
-                const imgH = state.image.element.height * finalScale;
-
-                const compositedObjectCanvas = finalObjectCanvas;
-                const compositedObjectCtx = finalObjectCtx;
-                compositedObjectCtx.clearRect(0, 0, compositedObjectCanvas.width, compositedObjectCanvas.height);
-                
-                const imgBaseOffsetX = (canvas.width * state.image.offset.x) / 100;
-                const imgBaseOffsetY = (canvas.height * state.image.offset.y) / 100;
-                const totalOffsetX = imgBaseOffsetX + state.movement.positionOffset.x;
-                const totalOffsetY = imgBaseOffsetY + state.movement.positionOffset.y;
-
-                let fgColorFilterString = '';
-                if (state.color.enabled) {
-                    let filterParts = [];
-                    if (state.color.colorize) { filterParts.push('sepia(1)'); }
-                    filterParts.push(`hue-rotate(${state.color.hue}deg)`);
-                    filterParts.push(`saturate(${100 + state.color.saturation}%)`);
-                    filterParts.push(`brightness(${100 + state.color.brightness}%)`);
-                    fgColorFilterString = filterParts.join(' ');
-                }
-
-                if (state.paperFoldOverlay.enabled) {
-                    objectCtx.save();
-                    objectCtx.clearRect(0, 0, objectCanvas.width, objectCanvas.height);
-                    objectCtx.translate(canvas.width / 2 + totalOffsetX, canvas.height / 2 + totalOffsetY);
-                    if (state.movement.enabled) { objectCtx.rotate(state.movement.rotation * Math.PI / 180); }
+                // --- DRAW ALL OBJECTS ---
+                state.objects.forEach(objectState => {
+                    if (!objectState.image.element) return; // Skip if no image for this object
                     
-                    objectCtx.filter = fgColorFilterString;
-                    objectCtx.drawImage(state.image.element, -imgW / 2, -imgH / 2, imgW, imgH);
+                    // --- This entire block now runs for each object ---
+                    const canvasAspect = canvas.width / canvas.height;
+                    const imageAspect = objectState.image.element.width / objectState.image.element.height;
+                    let baseScale = (canvasAspect > imageAspect) ? canvas.height / objectState.image.element.height : canvas.width / objectState.image.element.width;
+                    const userScale = objectState.image.size / 100;
+                    const finalScale = baseScale * userScale;
+                    const imgW = objectState.image.element.width * finalScale;
+                    const imgH = objectState.image.element.height * finalScale;
+
+                    const compositedObjectCanvas = finalObjectCanvas;
+                    const compositedObjectCtx = finalObjectCtx;
+                    compositedObjectCtx.clearRect(0, 0, compositedObjectCanvas.width, compositedObjectCanvas.height);
                     
-                    const overlayImage = originalOverlayImages[state.paperFoldOverlay.currentImageIndex];
-                    if (overlayImage && overlayImage.complete && overlayImage.naturalWidth > 0) {
+                    const imgBaseOffsetX = (canvas.width * objectState.image.offset.x) / 100;
+                    const imgBaseOffsetY = (canvas.height * objectState.image.offset.y) / 100;
+                    const totalOffsetX = imgBaseOffsetX + objectState.movement.positionOffset.x;
+                    const totalOffsetY = imgBaseOffsetY + objectState.movement.positionOffset.y;
+
+                    let fgColorFilterString = '';
+                    if (objectState.color.enabled) {
+                        let filterParts = [];
+                        if (objectState.color.colorize) { filterParts.push('sepia(1)'); }
+                        filterParts.push(`hue-rotate(${objectState.color.hue}deg)`);
+                        filterParts.push(`saturate(${100 + objectState.color.saturation}%)`);
+                        filterParts.push(`brightness(${100 + objectState.color.brightness}%)`);
+                        fgColorFilterString = filterParts.join(' ');
+                    }
+
+                    if (objectState.paperFoldOverlay.enabled) {
                         objectCtx.save();
-                    
-                        const effectStrength = state.paperFoldOverlay.opacity; // 0 - 100
-                        const overlayW = imgW * 1.25;
-                        const overlayH = imgH * 1.25;
-                    
-                        objectCtx.globalCompositeOperation = state.paperFoldOverlay.blendMode;
-                    
-                        const tempCanvas = document.createElement('canvas');
-                        tempCanvas.width = overlayImage.width;
-                        tempCanvas.height = overlayImage.height;
-                        const tempCtx = tempCanvas.getContext('2d');
-                        tempCtx.drawImage(overlayImage, 0, 0);
-                    
-                        const imageData = tempCtx.getImageData(0, 0, overlayImage.width, overlayImage.height);
-                        const data = imageData.data;
-                    
-                        const strength = (100 - effectStrength) / 100; // 1 = efek penuh, 0 = tak berubah
-                    
-                        for (let i = 0; i < data.length; i += 4) {
-                            // Setiap channel mendekati putih berdasarkan seberapa gelap dan effectStrength
-                            data[i]     = data[i]     + (255 - data[i])     * strength; // R
-                            data[i + 1] = data[i + 1] + (255 - data[i + 1]) * strength; // G
-                            data[i + 2] = data[i + 2] + (255 - data[i + 2]) * strength; // B
+                        objectCtx.clearRect(0, 0, objectCanvas.width, objectCanvas.height);
+                        objectCtx.translate(canvas.width / 2 + totalOffsetX, canvas.height / 2 + totalOffsetY);
+                        if (objectState.movement.enabled) { objectCtx.rotate(objectState.movement.rotation * Math.PI / 180); }
+                        
+                        objectCtx.filter = fgColorFilterString;
+                        objectCtx.drawImage(objectState.image.element, -imgW / 2, -imgH / 2, imgW, imgH);
+                        
+                        const overlayImage = originalOverlayImages[objectState.paperFoldOverlay.currentImageIndex];
+                        if (overlayImage && overlayImage.complete && overlayImage.naturalWidth > 0) {
+                            objectCtx.save();
+                        
+                            const effectStrength = objectState.paperFoldOverlay.opacity; // 0 - 100
+                            const overlayW = imgW * 1.25;
+                            const overlayH = imgH * 1.25;
+                        
+                            objectCtx.globalCompositeOperation = objectState.paperFoldOverlay.blendMode;
+                        
+                            const tempCanvas = document.createElement('canvas');
+                            tempCanvas.width = overlayImage.width;
+                            tempCanvas.height = overlayImage.height;
+                            const tempCtx = tempCanvas.getContext('2d');
+                            tempCtx.drawImage(overlayImage, 0, 0);
+                        
+                            const imageData = tempCtx.getImageData(0, 0, overlayImage.width, overlayImage.height);
+                            const data = imageData.data;
+                        
+                            const strength = (100 - effectStrength) / 100; // 1 = full effect, 0 = no change
+                        
+                            for (let i = 0; i < data.length; i += 4) {
+                                data[i]     = data[i]     + (255 - data[i])     * strength; // R
+                                data[i + 1] = data[i + 1] + (255 - data[i + 1]) * strength; // G
+                                data[i + 2] = data[i + 2] + (255 - data[i + 2]) * strength; // B
+                            }
+                        
+                            tempCtx.putImageData(imageData, 0, 0);
+                            objectCtx.drawImage(tempCanvas, -overlayW / 2, -overlayH / 2, overlayW, overlayH);
+                        
+                            objectCtx.restore();
                         }
-                    
-                        tempCtx.putImageData(imageData, 0, 0);
-                        objectCtx.drawImage(tempCanvas, -overlayW / 2, -overlayH / 2, overlayW, overlayH);
-                    
                         objectCtx.restore();
+                        
+                        
+                        compositedObjectCtx.save();
+                        let tornFilterString = '';
+                        if (objectState.stroke.enabled && objectState.stroke.width > 0) {
+                            tornDilate.setAttribute('radius', objectState.stroke.width);
+                            tornDisplacement.setAttribute('scale', objectState.stroke.roughness);
+                            tornTurbulence.setAttribute('baseFrequency', objectState.stroke.detail);
+                            tornFlood.setAttribute('flood-color', '#FFFFFF');
+                            tornFilterString = `url(#combined-filter)`;
+                        }
+                        compositedObjectCtx.filter = tornFilterString;
+                        compositedObjectCtx.translate(compositedObjectCanvas.width / 2 + totalOffsetX, compositedObjectCanvas.height / 2 + totalOffsetY);
+                        if (objectState.movement.enabled) { compositedObjectCtx.rotate(objectState.movement.rotation * Math.PI / 180); }
+                        compositedObjectCtx.drawImage(objectState.image.element, -imgW / 2, -imgH / 2, imgW, imgH);
+                        compositedObjectCtx.restore();
+                        compositedObjectCtx.save();
+                        compositedObjectCtx.globalCompositeOperation = 'source-in';
+                        compositedObjectCtx.drawImage(objectCanvas, 0, 0);
+                        compositedObjectCtx.restore();
+                    } else {
+                        compositedObjectCtx.save();
+                        let tornFilterString = '';
+                        if (objectState.stroke.enabled && objectState.stroke.width > 0) {
+                            tornDilate.setAttribute('radius', objectState.stroke.width);
+                            tornDisplacement.setAttribute('scale', objectState.stroke.roughness);
+                            tornTurbulence.setAttribute('baseFrequency', objectState.stroke.detail);
+                            tornFlood.setAttribute('flood-color', '#FFFFFF');
+                            tornFilterString = `url(#combined-filter)`;
+                        }
+                        compositedObjectCtx.filter = [fgColorFilterString, tornFilterString].filter(Boolean).join(' ');
+                        compositedObjectCtx.translate(compositedObjectCanvas.width / 2 + totalOffsetX, compositedObjectCanvas.height / 2 + totalOffsetY);
+                        if (objectState.movement.enabled) { compositedObjectCtx.rotate(objectState.movement.rotation * Math.PI / 180); }
+                        compositedObjectCtx.drawImage(objectState.image.element, -imgW / 2, -imgH / 2, imgW, imgH);
+                        compositedObjectCtx.restore();
                     }
-                    objectCtx.restore();
-                    
-                    
-                    compositedObjectCtx.save();
-                    let tornFilterString = '';
-                    if (state.stroke.enabled && state.stroke.width > 0) {
-                        tornDilate.setAttribute('radius', state.stroke.width);
-                        tornDisplacement.setAttribute('scale', state.stroke.roughness);
-                        tornTurbulence.setAttribute('baseFrequency', state.stroke.detail);
-                        tornFlood.setAttribute('flood-color', '#FFFFFF');
-                        tornFilterString = `url(#combined-filter)`;
-                    }
-                    compositedObjectCtx.filter = tornFilterString;
-                    compositedObjectCtx.translate(compositedObjectCanvas.width / 2 + totalOffsetX, compositedObjectCanvas.height / 2 + totalOffsetY);
-                    if (state.movement.enabled) { compositedObjectCtx.rotate(state.movement.rotation * Math.PI / 180); }
-                    compositedObjectCtx.drawImage(state.image.element, -imgW / 2, -imgH / 2, imgW, imgH);
-                    compositedObjectCtx.restore();
-                    compositedObjectCtx.save();
-                    compositedObjectCtx.globalCompositeOperation = 'source-in';
-                    compositedObjectCtx.drawImage(objectCanvas, 0, 0);
-                    compositedObjectCtx.restore();
-                } else {
-                    compositedObjectCtx.save();
-                    let tornFilterString = '';
-                    if (state.stroke.enabled && state.stroke.width > 0) {
-                        tornDilate.setAttribute('radius', state.stroke.width);
-                        tornDisplacement.setAttribute('scale', state.stroke.roughness);
-                        tornTurbulence.setAttribute('baseFrequency', state.stroke.detail);
-                        tornFlood.setAttribute('flood-color', '#FFFFFF');
-                        tornFilterString = `url(#combined-filter)`;
-                    }
-                    compositedObjectCtx.filter = [fgColorFilterString, tornFilterString].filter(Boolean).join(' ');
-                    compositedObjectCtx.translate(compositedObjectCanvas.width / 2 + totalOffsetX, compositedObjectCanvas.height / 2 + totalOffsetY);
-                    if (state.movement.enabled) { compositedObjectCtx.rotate(state.movement.rotation * Math.PI / 180); }
-                    compositedObjectCtx.drawImage(state.image.element, -imgW / 2, -imgH / 2, imgW, imgH);
-                    compositedObjectCtx.restore();
-                }
 
-                ctx.save();
-                if (state.shadow.enabled) {
-                    ctx.shadowColor = hexToRgba(state.shadow.color, state.shadow.opacity / 100);
-                    ctx.shadowBlur = state.shadow.blur;
-                    ctx.shadowOffsetX = state.shadow.offsetX;
-                    ctx.shadowOffsetY = state.shadow.offsetY;
-                }
-                ctx.drawImage(compositedObjectCanvas, 0, 0);
-                ctx.restore();
+                    ctx.save();
+                    if (objectState.shadow.enabled) {
+                        ctx.shadowColor = hexToRgba(objectState.shadow.color, objectState.shadow.opacity / 100);
+                        ctx.shadowBlur = objectState.shadow.blur;
+                        ctx.shadowOffsetX = objectState.shadow.offsetX;
+                        ctx.shadowOffsetY = objectState.shadow.offsetY;
+                    }
+                    ctx.drawImage(compositedObjectCanvas, 0, 0);
+                    ctx.restore();
+                });
             }
 
             /**
-             * Updates the object's position and rotation based on movement settings and time.
-             * @param {number} timestamp - The current time from requestAnimationFrame.
+             * Updates objects' positions and rotations based on movement settings and time.
              */
             function updateMovement(timestamp) {
-                if (!state.movement.enabled) {
-                    if (state.movement.rotation !== 0 || state.movement.positionOffset.x !== 0 || state.movement.positionOffset.y !== 0) {
-                        state.movement.rotation = 0;
-                        state.movement.positionOffset = { x: 0, y: 0 };
-                        requestRedraw();
-                    }
-                    return;
-                }
-
                 let hasChanged = false;
-                const isSimpelMode = state.movement.mode === 'simpel';
-                const speedMultiplier = isSimpelMode ? state.movement.simpelSpeed : 1;
-                const strengthMultiplier = isSimpelMode ? state.movement.simpelStrength : 1;
-                const effectiveRotationSpeed = state.movement.rotationSpeed * speedMultiplier;
-                const effectiveRotationStrength = state.movement.rotationStrength * strengthMultiplier;
-                const effectivePositionSpeedX = state.movement.positionSpeed.x * speedMultiplier;
-                const effectivePositionSpeedY = state.movement.positionSpeed.y * speedMultiplier;
-                const effectivePositionStrengthX = state.movement.positionStrength.x * strengthMultiplier;
-                const effectivePositionStrengthY = state.movement.positionStrength.y * strengthMultiplier;
-
-                if (effectiveRotationSpeed > 0 && effectiveRotationStrength > 0) {
-                    const rotationInterval = 1000 / effectiveRotationSpeed;
-                    if (timestamp - state.movement.lastRotationUpdateTime > rotationInterval) {
-                        state.movement.rotation = state.movement.rotation > 0 ? -effectiveRotationStrength : effectiveRotationStrength;
-                        state.movement.lastRotationUpdateTime = timestamp;
-                        hasChanged = true;
+                state.objects.forEach(objectState => {
+                    if (!objectState.movement.enabled) {
+                        if (objectState.movement.rotation !== 0 || objectState.movement.positionOffset.x !== 0 || objectState.movement.positionOffset.y !== 0) {
+                            objectState.movement.rotation = 0;
+                            objectState.movement.positionOffset = { x: 0, y: 0 };
+                            hasChanged = true;
+                        }
+                        return;
                     }
-                } else if (state.movement.rotation !== 0) {
-                    state.movement.rotation = 0; hasChanged = true;
-                }
 
-                if (effectivePositionSpeedX > 0 && effectivePositionStrengthX > 0) {
-                    const positionIntervalX = 1000 / effectivePositionSpeedX;
-                    if (timestamp - state.movement.lastPositionUpdateTime.x > positionIntervalX) {
-                        state.movement.positionOffset.x = (Math.random() - 0.5) * 2 * effectivePositionStrengthX;
-                        state.movement.lastPositionUpdateTime.x = timestamp;
-                        hasChanged = true;
-                    }
-                } else if (state.movement.positionOffset.x !== 0) {
-                    state.movement.positionOffset.x = 0; hasChanged = true;
-                }
+                    const isSimpelMode = objectState.movement.mode === 'simpel';
+                    const speedMultiplier = isSimpelMode ? objectState.movement.simpelSpeed : 1;
+                    const strengthMultiplier = isSimpelMode ? objectState.movement.simpelStrength : 1;
+                    const effectiveRotationSpeed = objectState.movement.rotationSpeed * speedMultiplier;
+                    const effectiveRotationStrength = objectState.movement.rotationStrength * strengthMultiplier;
+                    const effectivePositionSpeedX = objectState.movement.positionSpeed.x * speedMultiplier;
+                    const effectivePositionSpeedY = objectState.movement.positionSpeed.y * speedMultiplier;
+                    const effectivePositionStrengthX = objectState.movement.positionStrength.x * strengthMultiplier;
+                    const effectivePositionStrengthY = objectState.movement.positionStrength.y * strengthMultiplier;
 
-                if (effectivePositionSpeedY > 0 && effectivePositionStrengthY > 0) {
-                    const positionIntervalY = 1000 / effectivePositionSpeedY;
-                    if (timestamp - state.movement.lastPositionUpdateTime.y > positionIntervalY) {
-                        state.movement.positionOffset.y = (Math.random() - 0.5) * 2 * effectivePositionStrengthY;
-                        state.movement.lastPositionUpdateTime.y = timestamp;
-                        hasChanged = true;
+                    if (effectiveRotationSpeed > 0 && effectiveRotationStrength > 0) {
+                        const rotationInterval = 1000 / effectiveRotationSpeed;
+                        if (timestamp - objectState.movement.lastRotationUpdateTime > rotationInterval) {
+                            objectState.movement.rotation = objectState.movement.rotation > 0 ? -effectiveRotationStrength : effectiveRotationStrength;
+                            objectState.movement.lastRotationUpdateTime = timestamp;
+                            hasChanged = true;
+                        }
+                    } else if (objectState.movement.rotation !== 0) {
+                        objectState.movement.rotation = 0; hasChanged = true;
                     }
-                } else if (state.movement.positionOffset.y !== 0) {
-                    state.movement.positionOffset.y = 0; hasChanged = true;
-                }
+
+                    if (effectivePositionSpeedX > 0 && effectivePositionStrengthX > 0) {
+                        const positionIntervalX = 1000 / effectivePositionSpeedX;
+                        if (timestamp - objectState.movement.lastPositionUpdateTime.x > positionIntervalX) {
+                            objectState.movement.positionOffset.x = (Math.random() - 0.5) * 2 * effectivePositionStrengthX;
+                            objectState.movement.lastPositionUpdateTime.x = timestamp;
+                            hasChanged = true;
+                        }
+                    } else if (objectState.movement.positionOffset.x !== 0) {
+                        objectState.movement.positionOffset.x = 0; hasChanged = true;
+                    }
+
+                    if (effectivePositionSpeedY > 0 && effectivePositionStrengthY > 0) {
+                        const positionIntervalY = 1000 / effectivePositionSpeedY;
+                        if (timestamp - objectState.movement.lastPositionUpdateTime.y > positionIntervalY) {
+                            objectState.movement.positionOffset.y = (Math.random() - 0.5) * 2 * effectivePositionStrengthY;
+                            objectState.movement.lastPositionUpdateTime.y = timestamp;
+                            hasChanged = true;
+                        }
+                    } else if (objectState.movement.positionOffset.y !== 0) {
+                        objectState.movement.positionOffset.y = 0; hasChanged = true;
+                    }
+                });
 
                 if (hasChanged) { requestRedraw(); }
             }
             
             /**
-             * Cycles through the paper texture overlay images based on speed setting.
-             * @param {number} timestamp - The current time from requestAnimationFrame.
+             * Cycles through the paper texture overlay images for each object.
              */
             function updatePaperFoldOverlay(timestamp) {
                 const loadedImages = originalOverlayImages.filter(img => img !== null);
-                if (!state.paperFoldOverlay.enabled || state.paperFoldOverlay.speed <= 0 || loadedImages.length === 0) return;
-                const timeSinceLastSwitch = timestamp - state.paperFoldOverlay.lastImageSwitchTime;
-                const interval = 1000 / state.paperFoldOverlay.speed;
-                if (timeSinceLastSwitch >= interval) {
-                    state.paperFoldOverlay.currentImageIndex = (state.paperFoldOverlay.currentImageIndex + 1) % loadedImages.length;
-                    state.paperFoldOverlay.lastImageSwitchTime = timestamp;
-                    requestRedraw();
-                }
+                if (loadedImages.length === 0) return;
+
+                let hasChanged = false;
+                state.objects.forEach(objectState => {
+                    if (!objectState.paperFoldOverlay.enabled || objectState.paperFoldOverlay.speed <= 0) return;
+                    
+                    const timeSinceLastSwitch = timestamp - objectState.paperFoldOverlay.lastImageSwitchTime;
+                    const interval = 1000 / objectState.paperFoldOverlay.speed;
+                    if (timeSinceLastSwitch >= interval) {
+                        objectState.paperFoldOverlay.currentImageIndex = (objectState.paperFoldOverlay.currentImageIndex + 1) % loadedImages.length;
+                        objectState.paperFoldOverlay.lastImageSwitchTime = timestamp;
+                        hasChanged = true;
+                    }
+                });
+                
+                if (hasChanged) { requestRedraw(); }
             }
 
             /**
-             * The main animation loop. Calls update and draw functions.
-             * @param {number} [timestamp=0] - The current time provided by requestAnimationFrame.
+             * The main animation loop.
              */
             function animationLoop(timestamp = 0) {
                 updateMovement(timestamp);
@@ -1415,17 +1444,12 @@
             }
 
             /**
-             * Binds a slider and a number input together to update a single state value.
-             * @param {string} sliderId - The ID of the range slider element.
-             * @param {string} inputId - The ID of the number input element.
-             * @param {function} stateUpdater - A function that takes the new value and updates the state.
+             * Binds a slider and a number input together to update a single state value for the active object.
              */
             function syncSliderAndInput(sliderId, inputId, stateUpdater) {
                 const slider = document.getElementById(sliderId);
                 const input = document.getElementById(inputId);
                 if (!slider || !input) return;
-
-                const thumb = slider.querySelector('::-webkit-slider-thumb');
 
                 function updateValue(value, trigger) {
                     const min = parseFloat(slider.min);
@@ -1455,9 +1479,7 @@
             }
 
             /**
-             * Binds a number input to update a state value.
-             * @param {string} inputId - The ID of the number input element.
-             * @param {function} stateUpdater - A function that takes the new value and updates the state.
+             * Binds a number input to update a state value for the active object.
              */
             function syncInputOnly(inputId, stateUpdater) {
                 const input = document.getElementById(inputId);
@@ -1483,8 +1505,6 @@
             
             /**
              * Handles an uploaded image file, reads it, and sets it to the correct state property.
-             * @param {File} file - The image file to process.
-             * @param {('foreground'|'background')} target - Where to place the image.
              */
             function handleImageFile(file, target) {
                 if (!file || !file.type.startsWith('image/')) return;
@@ -1494,8 +1514,9 @@
                     const img = new Image();
                     img.onload = () => {
                         if (target === 'foreground') {
-                            state.image.element = img;
-                            state.image.file = file;
+                            const activeObject = state.objects[state.activeObjectIndex];
+                            activeObject.image.element = img;
+                            activeObject.image.file = file;
                         } else if (target === 'background') {
                             state.background.element = img;
                             state.background.file = file;
@@ -1511,7 +1532,6 @@
 
             /**
              * Updates all text elements in the UI to the selected language.
-             * @param {string} lang - The language key ('en' or 'id').
              */
             function updateUIText(lang) {
                 const translationMap = translations[lang] || translations['en'];
@@ -1535,9 +1555,6 @@
 
             /**
              * Truncates a filename for display purposes.
-             * @param {string} filename - The full filename.
-             * @param {number} [maxLength=8] - The max length of the base name.
-             * @returns {string} The truncated filename.
              */
             function truncateFilename(filename, maxLength = 8) {
                 const lastDotIndex = filename.lastIndexOf('.');
@@ -1559,18 +1576,26 @@
             function updateUIFromState() {
                 updateUIText(state.language);
 
-                // Update object image controls
+                // Get the currently active object's state
+                const activeObjectState = state.objects[state.activeObjectIndex];
+                
+                // Update object selector buttons
+                document.querySelectorAll('#object-selector-btns button').forEach(btn => {
+                    btn.classList.toggle('active', parseInt(btn.dataset.index) === state.activeObjectIndex);
+                });
+
+                // Update object image controls based on the active object
                 const imageSpecificControls = document.getElementById('image-specific-controls');
                 const dropZonePrompt = document.getElementById('drop-zone-prompt');
                 const dropZoneFilenameContainer = document.getElementById('drop-zone-filename');
                 const deleteImageBtn = document.getElementById('delete-image-btn');
                 
-                if (state.image.element) {
+                if (activeObjectState.image.element) {
                     imageSpecificControls.classList.remove('is-disabled');
                     dropZonePrompt.classList.add('hidden');
                     dropZoneFilenameContainer.classList.remove('hidden');
-                    if (dropZoneFilenameContainer.querySelector('p') && state.image.file) {
-                        dropZoneFilenameContainer.querySelector('p').textContent = truncateFilename(state.image.file.name);
+                    if (dropZoneFilenameContainer.querySelector('p') && activeObjectState.image.file) {
+                        dropZoneFilenameContainer.querySelector('p').textContent = truncateFilename(activeObjectState.image.file.name);
                     }
                     deleteImageBtn.classList.remove('hidden');
                 } else {
@@ -1610,7 +1635,7 @@
                 // Update paper fold overlay controls
                 const paperFoldOverlayControls = document.getElementById('overlay-controls');
                 const anyOverlayImageLoaded = originalOverlayImages.length > 0 && originalOverlayImages.some(img => img !== null);
-                if (state.paperFoldOverlay.enabled && anyOverlayImageLoaded) {
+                if (activeObjectState.paperFoldOverlay.enabled && anyOverlayImageLoaded) {
                     paperFoldOverlayControls.classList.remove('controls-disabled-for-overlay');
                 } else {
                     paperFoldOverlayControls.classList.add('controls-disabled-for-overlay');
@@ -1621,6 +1646,7 @@
                 document.querySelectorAll('#aspect-ratio-btns button').forEach(btn => btn.classList.toggle('active', btn.dataset.ratio === state.aspectRatio));
                 document.querySelectorAll('#canvas-resolution-btns button').forEach(btn => btn.classList.toggle('active', parseInt(btn.dataset.res) === state.canvasDisplayResolution));
                 
+                // This list now updates based on the ACTIVE OBJECT's state
                 const inputsToUpdate = [
                     { id: 'background-size-input', value: state.background.transform.size },
                     { id: 'background-offset-x-input', value: state.background.transform.offset.x },
@@ -1634,30 +1660,32 @@
                     { id: 'background-vignette-radius-input', value: state.background.effects.vignette.radius },
                     { id: 'background-vignette-feather-input', value: state.background.effects.vignette.feather },
                     { id: 'background-vignette-color', value: state.background.effects.vignette.color },
-                    { id: 'image-size-input', value: state.image.size },
-                    { id: 'image-offset-x-input', value: state.image.offset.x },
-                    { id: 'image-offset-y-input', value: state.image.offset.y },
-                    { id: 'stroke-width-input', value: state.stroke.width },
-                    { id: 'stroke-roughness-input', value: state.stroke.roughness },
-                    { id: 'stroke-detail-input', value: state.stroke.detail * 1000 },
-                    { id: 'shadow-offset-x-input', value: state.shadow.offsetX }, { id: 'shadow-offset-y-input', value: state.shadow.offsetY },
-                    { id: 'shadow-blur-input', value: state.shadow.blur },
-                    { id: 'shadow-opacity-input', value: state.shadow.opacity },
-                    { id: 'shadow-color', value: state.shadow.color },
-                    { id: 'color-hue-input', value: state.color.hue },
-                    { id: 'color-saturation-input', value: state.color.saturation },
-                    { id: 'color-brightness-input', value: state.color.brightness },
-                    { id: 'colorize-switch', checked: state.color.colorize },
-                    { id: 'movement-simpel-speed-input', value: state.movement.simpelSpeed },
-                    { id: 'movement-simpel-strength-input', value: state.movement.simpelStrength },
-                    { id: 'movement-rotation-speed-input', value: state.movement.rotationSpeed },
-                    { id: 'movement-rotation-strength-input', value: state.movement.rotationStrength },
-                    { id: 'movement-position-speed-x-input', value: state.movement.positionSpeed.x },
-                    { id: 'movement-position-speed-y-input', value: state.movement.positionSpeed.y },
-                    { id: 'movement-position-strength-x-input', value: state.movement.positionStrength.x },
-                    { id: 'movement-position-strength-y-input', value: state.movement.positionStrength.y },
-                    { id: 'overlay-opacity-input', value: state.paperFoldOverlay.opacity },
-                    { id: 'overlay-speed-input', value: state.paperFoldOverlay.speed },
+
+                    { id: 'image-size-input', value: activeObjectState.image.size },
+                    { id: 'image-offset-x-input', value: activeObjectState.image.offset.x },
+                    { id: 'image-offset-y-input', value: activeObjectState.image.offset.y },
+                    { id: 'stroke-width-input', value: activeObjectState.stroke.width },
+                    { id: 'stroke-roughness-input', value: activeObjectState.stroke.roughness },
+                    { id: 'stroke-detail-input', value: activeObjectState.stroke.detail * 1000 },
+                    { id: 'shadow-offset-x-input', value: activeObjectState.shadow.offsetX }, { id: 'shadow-offset-y-input', value: activeObjectState.shadow.offsetY },
+                    { id: 'shadow-blur-input', value: activeObjectState.shadow.blur },
+                    { id: 'shadow-opacity-input', value: activeObjectState.shadow.opacity },
+                    { id: 'shadow-color', value: activeObjectState.shadow.color },
+                    { id: 'color-hue-input', value: activeObjectState.color.hue },
+                    { id: 'color-saturation-input', value: activeObjectState.color.saturation },
+                    { id: 'color-brightness-input', value: activeObjectState.color.brightness },
+                    { id: 'colorize-switch', checked: activeObjectState.color.colorize },
+                    { id: 'movement-simpel-speed-input', value: activeObjectState.movement.simpelSpeed },
+                    { id: 'movement-simpel-strength-input', value: activeObjectState.movement.simpelStrength },
+                    { id: 'movement-rotation-speed-input', value: activeObjectState.movement.rotationSpeed },
+                    { id: 'movement-rotation-strength-input', value: activeObjectState.movement.rotationStrength },
+                    { id: 'movement-position-speed-x-input', value: activeObjectState.movement.positionSpeed.x },
+                    { id: 'movement-position-speed-y-input', value: activeObjectState.movement.positionSpeed.y },
+                    { id: 'movement-position-strength-x-input', value: activeObjectState.movement.positionStrength.x },
+                    { id: 'movement-position-strength-y-input', value: activeObjectState.movement.positionStrength.y },
+                    { id: 'overlay-opacity-input', value: activeObjectState.paperFoldOverlay.opacity },
+                    { id: 'overlay-speed-input', value: activeObjectState.paperFoldOverlay.speed },
+
                     { id: 'export-duration-input', value: state.export.duration },
                     { id: 'export-filename-input', value: state.export.filename },
                 ];
@@ -1682,22 +1710,22 @@
 
                     let isEnabled;
                     const sectionId = section.id;
-                    if (sectionId.includes('foreground-stroke')) isEnabled = state.stroke.enabled;
-                    else if(sectionId.includes('foreground-shadow')) isEnabled = state.shadow.enabled;
-                    else if(sectionId.includes('foreground-color')) isEnabled = state.color.enabled;
-                    else if(sectionId.includes('movement')) isEnabled = state.movement.enabled;
+                    if (sectionId.includes('foreground-stroke')) isEnabled = activeObjectState.stroke.enabled;
+                    else if(sectionId.includes('foreground-shadow')) isEnabled = activeObjectState.shadow.enabled;
+                    else if(sectionId.includes('foreground-color')) isEnabled = activeObjectState.color.enabled;
+                    else if(sectionId.includes('movement')) isEnabled = activeObjectState.movement.enabled;
                     else if(sectionId.includes('background-color-correction')) isEnabled = state.background.effects.colorCorrection.enabled;
                     else if(sectionId.includes('background-blur')) isEnabled = state.background.effects.blur.enabled;
                     else if(sectionId.includes('background-vignette')) isEnabled = state.background.effects.vignette.enabled;
-                    else if(sectionId.includes('paper-fold-overlay')) isEnabled = state.paperFoldOverlay.enabled;
+                    else if(sectionId.includes('paper-fold-overlay')) isEnabled = activeObjectState.paperFoldOverlay.enabled;
                     
                     if(typeof isEnabled !== 'undefined') switchInput.checked = isEnabled;
                 });
                 
-                const isSimpelMode = state.movement.mode === 'simpel';
+                const isSimpelMode = activeObjectState.movement.mode === 'simpel';
                 document.getElementById('movement-controls-simpel').classList.toggle('hidden', !isSimpelMode);
                 document.getElementById('movement-controls-lengkap').classList.toggle('hidden', isSimpelMode);
-                document.querySelectorAll('#movement-mode-btns button').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === state.movement.mode));
+                document.querySelectorAll('#movement-mode-btns button').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === activeObjectState.movement.mode));
 
                 document.getElementById('color-correction-standard-controls').classList.remove('hidden');
                 document.getElementById('background-color-correction-standard-controls').classList.remove('hidden');
@@ -1756,7 +1784,6 @@
             
             /**
              * Applies a new UI size and redraws the interface.
-             * @param {('compact'|'normal'|'luas')} size - The new UI size.
              */
             function applyUISize(size) {
                 state.uiSize = size;
@@ -1766,20 +1793,16 @@
 
             /**
              * Resets all settings to their default values.
-             * @param {boolean} [deleteImages=false] - Whether to also remove the uploaded images.
              */
             function resetSettings(deleteImages = false) {
-                const currentFgImg = state.image.element;
                 const currentBgImg = state.background.element;
+                const currentBgFile = state.background.file;
                 
                 state = JSON.parse(JSON.stringify(DEFAULT_STATE));
                 
                 if (!deleteImages) {
-                    state.image.element = currentFgImg;
                     state.background.element = currentBgImg;
-                } else {
-                    state.image.file = null;
-                    state.background.file = null;
+                    state.background.file = currentBgFile;
                 }
                 
                 const isCurrentlyMobile = !window.matchMedia('(min-width: 769px)').matches;
@@ -1800,7 +1823,7 @@
                     bgTransformAccordion.classList.add('accordion-open');
                     bgTransformAccordion.querySelector('.accordion-body').classList.remove('hidden');
                 }
-                if (state.image.element) {
+                if (state.objects[state.activeObjectIndex].image.element) {
                     const fgTransformAccordion = document.getElementById('foreground-transform-accordion');
                     if(fgTransformAccordion) {
                         fgTransformAccordion.classList.add('accordion-open');
@@ -1813,14 +1836,17 @@
             }
             
             /**
-             * Resets a specific section of the settings to its default value.
-             * @param {string} sectionKey - A dot-notation key for the section in the state object (e.g., 'shadow').
+             * Resets a specific section of the settings to its default value for the active object.
              */
             function resetSectionSettings(sectionKey) {
+                const activeObjectIndex = state.activeObjectIndex;
+                const defaultObjectState = DEFAULT_OBJECT_STATE;
+
                 if (sectionKey === 'image') {
-                    const defaultImageState = DEFAULT_STATE.image;
-                    state.image.size = defaultImageState.size;
-                    state.image.offset = JSON.parse(JSON.stringify(defaultImageState.offset));
+                    state.objects[activeObjectIndex].image.size = defaultObjectState.image.size;
+                    state.objects[activeObjectIndex].image.offset = JSON.parse(JSON.stringify(defaultObjectState.image.offset));
+                } else if (['stroke', 'shadow', 'color', 'movement', 'paperFoldOverlay'].includes(sectionKey)) {
+                     state.objects[activeObjectIndex][sectionKey] = JSON.parse(JSON.stringify(defaultObjectState[sectionKey]));
                 } else {
                     const keys = sectionKey.split('.');
                     let defaultSection = DEFAULT_STATE;
@@ -1841,8 +1867,6 @@
 
             /**
              * Shows a notification message at the top of the screen.
-             * @param {string} messageKey - The key for the translation string.
-             * @param {number} [duration=3000] - How long to show the message in milliseconds.
              */
             function showTopNotification(messageKey, duration = 3000) {
                 clearTimeout(notificationTimeout);
@@ -1857,10 +1881,6 @@
 
             /**
              * Shows a modal confirmation dialog.
-             * @param {string} titleKey - The translation key for the title.
-             * @param {string} messageKey - The translation key for the message.
-             * @param {object} [options={}] - Additional options, like showing a checkbox.
-             * @returns {Promise<object>} A promise that resolves with the user's choice.
              */
             function showConfirmationPopup(titleKey, messageKey, options = {}) {
                 return new Promise(resolve => {
@@ -1899,7 +1919,8 @@
              * Starts the video export process using CCapture.js.
              */
             async function startExport() {
-                if (!state.image.element && !state.background.element) {
+                const hasAnyImage = state.objects.some(obj => obj.image.element) || state.background.element;
+                if (!hasAnyImage) {
                     showTopNotification("notificationWarnUpload");
                     return;
                 }
@@ -1927,15 +1948,18 @@
                     return;
                 }
 
-                // Set canvas to final export dimensions and reset animation state
+                // Set canvas to final export dimensions and reset animation state for all objects
                 canvas.width = finalExportDims.w;
                 canvas.height = finalExportDims.h;
-                state.movement.lastRotationUpdateTime = 0;
-                state.movement.lastPositionUpdateTime = { x: 0, y: 0 };
-                state.movement.rotation = 0;
-                state.movement.positionOffset = {x: 0, y: 0};
-                state.paperFoldOverlay.lastImageSwitchTime = 0;
-                state.paperFoldOverlay.currentImageIndex = 0;
+                state.objects.forEach(obj => {
+                    obj.movement.lastRotationUpdateTime = 0;
+                    obj.movement.lastPositionUpdateTime = { x: 0, y: 0 };
+                    obj.movement.rotation = 0;
+                    obj.movement.positionOffset = {x: 0, y: 0};
+                    obj.paperFoldOverlay.lastImageSwitchTime = 0;
+                    obj.paperFoldOverlay.currentImageIndex = 0;
+                });
+                
                 const DURATION_S = state.export.duration;
                 const FRAME_RATE = state.export.fps;
                 const FILENAME = state.export.filename || 'animasi-sobek';
@@ -1982,7 +2006,6 @@
 
             /**
              * Shows the content for a specific tab and updates the active state of tab buttons.
-             * @param {string} tabName - The name of the tab to show ('background', 'object', 'info').
              */
             function showTab(tabName) {
                 const lang = state.language;
@@ -2051,12 +2074,11 @@
                 const totalOverlays = overlayImageUrls.length;
                 overlayImageUrls.forEach((url, index) => {
                     const img = new Image();
-                    // Required for loading images from another domain into a canvas without tainting it
+                    img.crossOrigin = "Anonymous"; 
                     img.onload = () => {
                         originalOverlayImages[index] = img;
                         loadedOriginalOverlays++;
                         if (loadedOriginalOverlays === totalOverlays) {
-                            // All images loaded, now we can update the UI and draw
                             updateUIFromState();
                             requestRedraw();
                         }
@@ -2147,7 +2169,14 @@
                 };
                 setupDropZone('drop-zone', 'image-upload', 'foreground');
                 setupDropZone('background-drop-zone', 'background-image-upload', 'background');
-                document.getElementById('delete-image-btn').addEventListener('click', (e) => { e.stopPropagation(); state.image.element = null; state.image.file = null; document.getElementById('image-upload').value = ''; updateUIFromState(); });
+                document.getElementById('delete-image-btn').addEventListener('click', (e) => { 
+                    e.stopPropagation(); 
+                    const activeObject = state.objects[state.activeObjectIndex];
+                    activeObject.image.element = null; 
+                    activeObject.image.file = null; 
+                    document.getElementById('image-upload').value = ''; 
+                    updateUIFromState(); 
+                });
                 document.getElementById('remove-background-image').addEventListener('click', (e) => { e.stopPropagation(); state.background.element = null; state.background.file = null; document.getElementById('background-image-upload').value = ''; updateUIFromState(); });
                 
                 // Accordion logic
@@ -2191,12 +2220,20 @@
                     const switchEl = document.getElementById(switchId);
                     if (switchEl) {
                         switchEl.addEventListener('change', (e) => {
-                            const keys = stateKey.split('.');
-                            let sectionState = state;
-                            for (let i = 0; i < keys.length - 1; i++) {
-                                sectionState = sectionState[keys[i]];
+                            const isObjectProperty = ['stroke', 'shadow', 'color', 'movement', 'paperFoldOverlay'].includes(stateKey);
+                            
+                            let sectionState;
+                            if (isObjectProperty) {
+                                sectionState = state.objects[state.activeObjectIndex];
+                                sectionState[stateKey].enabled = e.target.checked;
+                            } else {
+                                const keys = stateKey.split('.');
+                                sectionState = state;
+                                for (let i = 0; i < keys.length - 1; i++) {
+                                    sectionState = sectionState[keys[i]];
+                                }
+                                sectionState[keys[keys.length - 1]].enabled = e.target.checked;
                             }
-                            sectionState[keys[keys.length - 1]].enabled = e.target.checked;
 
                             const section = switchEl.closest('.accordion-section');
                             const body = section.querySelector('.accordion-body');
@@ -2223,39 +2260,42 @@
                     });
                 });
                 
-                // Bind all sliders and inputs to the state
-                syncSliderAndInput('image-size', 'image-size-input', (val) => state.image.size = val);
-                syncSliderAndInput('image-offset-x', 'image-offset-x-input', (val) => state.image.offset.x = val);
-                syncSliderAndInput('image-offset-y', 'image-offset-y-input', (val) => state.image.offset.y = val);
-                syncSliderAndInput('stroke-width', 'stroke-width-input', (val) => state.stroke.width = val);
-                syncSliderAndInput('stroke-roughness', 'stroke-roughness-input', (val) => state.stroke.roughness = val);
-                syncSliderAndInput('stroke-detail', 'stroke-detail-input', (val) => state.stroke.detail = val / 1000);
-                syncSliderAndInput('shadow-blur', 'shadow-blur-input', (val) => state.shadow.blur = val);
-                syncSliderAndInput('shadow-opacity', 'shadow-opacity-input', (val) => state.shadow.opacity = val);
-                syncInputOnly('shadow-offset-x-input', (val) => state.shadow.offsetX = val);
-                syncInputOnly('shadow-offset-y-input', (val) => state.shadow.offsetY = val);
-                document.getElementById('shadow-color').addEventListener('input', (e) => { state.shadow.color = e.target.value; requestRedraw(); });
-                syncSliderAndInput('color-hue', 'color-hue-input', (val) => state.color.hue = val);
-                syncSliderAndInput('color-saturation', 'color-saturation-input', (val) => state.color.saturation = val);
-                syncSliderAndInput('color-brightness', 'color-brightness-input', (val) => state.color.brightness = val);
-                document.getElementById('colorize-switch').addEventListener('change', (e) => { state.color.colorize = e.target.checked; updateUIFromState(); });
-                document.getElementById('background-colorize-switch').addEventListener('change', (e) => { state.background.effects.colorCorrection.colorize = e.target.checked; updateUIFromState(); });
+                // --- BIND OBJECT CONTROLS ---
+                const getActiveObject = () => state.objects[state.activeObjectIndex];
 
+                syncSliderAndInput('image-size', 'image-size-input', (val) => getActiveObject().image.size = val);
+                syncSliderAndInput('image-offset-x', 'image-offset-x-input', (val) => getActiveObject().image.offset.x = val);
+                syncSliderAndInput('image-offset-y', 'image-offset-y-input', (val) => getActiveObject().image.offset.y = val);
+                syncSliderAndInput('stroke-width', 'stroke-width-input', (val) => getActiveObject().stroke.width = val);
+                syncSliderAndInput('stroke-roughness', 'stroke-roughness-input', (val) => getActiveObject().stroke.roughness = val);
+                syncSliderAndInput('stroke-detail', 'stroke-detail-input', (val) => getActiveObject().stroke.detail = val / 1000);
+                syncSliderAndInput('shadow-blur', 'shadow-blur-input', (val) => getActiveObject().shadow.blur = val);
+                syncSliderAndInput('shadow-opacity', 'shadow-opacity-input', (val) => getActiveObject().shadow.opacity = val);
+                syncInputOnly('shadow-offset-x-input', (val) => getActiveObject().shadow.offsetX = val);
+                syncInputOnly('shadow-offset-y-input', (val) => getActiveObject().shadow.offsetY = val);
+                document.getElementById('shadow-color').addEventListener('input', (e) => { getActiveObject().shadow.color = e.target.value; requestRedraw(); });
+                syncSliderAndInput('color-hue', 'color-hue-input', (val) => getActiveObject().color.hue = val);
+                syncSliderAndInput('color-saturation', 'color-saturation-input', (val) => getActiveObject().color.saturation = val);
+                syncSliderAndInput('color-brightness', 'color-brightness-input', (val) => getActiveObject().color.brightness = val);
+                document.getElementById('colorize-switch').addEventListener('change', (e) => { getActiveObject().color.colorize = e.target.checked; updateUIFromState(); });
+                
                 document.getElementById('movement-mode-btns').addEventListener('click', (e) => {
                     const button = e.target.closest('button');
-                    if (button) { state.movement.mode = button.dataset.mode; updateUIFromState(); }
+                    if (button) { getActiveObject().movement.mode = button.dataset.mode; updateUIFromState(); }
                 });
-                syncSliderAndInput('movement-simpel-speed', 'movement-simpel-speed-input', (val) => state.movement.simpelSpeed = val);
-                syncSliderAndInput('movement-simpel-strength', 'movement-simpel-strength-input', (val) => state.movement.simpelStrength = val);
-                syncSliderAndInput('movement-rotation-speed', 'movement-rotation-speed-input', (val) => state.movement.rotationSpeed = val);
-                syncSliderAndInput('movement-rotation-strength', 'movement-rotation-strength-input', (val) => state.movement.rotationStrength = val);
-                syncSliderAndInput('movement-position-speed-x', 'movement-position-speed-x-input', (val) => state.movement.positionSpeed.x = val);
-                syncSliderAndInput('movement-position-speed-y', 'movement-position-speed-y-input', (val) => state.movement.positionSpeed.y = val);
-                syncSliderAndInput('movement-position-strength-x', 'movement-position-strength-x-input', (val) => state.movement.positionStrength.x = val);
-                syncSliderAndInput('movement-position-strength-y', 'movement-position-strength-y-input', (val) => state.movement.positionStrength.y = val);
+                syncSliderAndInput('movement-simpel-speed', 'movement-simpel-speed-input', (val) => getActiveObject().movement.simpelSpeed = val);
+                syncSliderAndInput('movement-simpel-strength', 'movement-simpel-strength-input', (val) => getActiveObject().movement.simpelStrength = val);
+                syncSliderAndInput('movement-rotation-speed', 'movement-rotation-speed-input', (val) => getActiveObject().movement.rotationSpeed = val);
+                syncSliderAndInput('movement-rotation-strength', 'movement-rotation-strength-input', (val) => getActiveObject().movement.rotationStrength = val);
+                syncSliderAndInput('movement-position-speed-x', 'movement-position-speed-x-input', (val) => getActiveObject().movement.positionSpeed.x = val);
+                syncSliderAndInput('movement-position-speed-y', 'movement-position-speed-y-input', (val) => getActiveObject().movement.positionSpeed.y = val);
+                syncSliderAndInput('movement-position-strength-x', 'movement-position-strength-x-input', (val) => getActiveObject().movement.positionStrength.x = val);
+                syncSliderAndInput('movement-position-strength-y', 'movement-position-strength-y-input', (val) => getActiveObject().movement.positionStrength.y = val);
 
-                syncSliderAndInput('overlay-opacity', 'overlay-opacity-input', (val) => { state.paperFoldOverlay.opacity = val; });
-                syncSliderAndInput('overlay-speed', 'overlay-speed-input', (val) => state.paperFoldOverlay.speed = val); 
+                syncSliderAndInput('overlay-opacity', 'overlay-opacity-input', (val) => { getActiveObject().paperFoldOverlay.opacity = val; });
+                syncSliderAndInput('overlay-speed', 'overlay-speed-input', (val) => getActiveObject().paperFoldOverlay.speed = val); 
+                
+                // --- BIND GLOBAL CONTROLS ---
                 document.getElementById('aspect-ratio-btns').addEventListener('click', (e) => {
                     const button = e.target.closest('button');
                     if (button) { state.aspectRatio = button.dataset.ratio; resizeAndRedrawAll(); updateUIFromState(); }
@@ -2275,6 +2315,7 @@
                 syncSliderAndInput('background-color-hue', 'background-color-hue-input', (val) => state.background.effects.colorCorrection.hue = val);
                 syncSliderAndInput('background-color-saturation', 'background-color-saturation-input', (val) => state.background.effects.colorCorrection.saturation = val);
                 syncSliderAndInput('background-color-brightness', 'background-color-brightness-input', (val) => state.background.effects.colorCorrection.brightness = val);
+                document.getElementById('background-colorize-switch').addEventListener('change', (e) => { state.background.effects.colorCorrection.colorize = e.target.checked; updateUIFromState(); });
                 syncSliderAndInput('background-blur-intensity', 'background-blur-intensity-input', (val) => state.background.effects.blur.intensity = val);
                 syncSliderAndInput('background-vignette-opacity', 'background-vignette-opacity-input', (val) => state.background.effects.vignette.opacity = val);
                 syncSliderAndInput('background-vignette-radius', 'background-vignette-radius-input', (val) => state.background.effects.vignette.radius = val);
@@ -2310,6 +2351,16 @@
                     setTimeout(() => topNotificationPopup.classList.add('hidden'), 300);
                 });
                 
+                // Object selector listener
+                document.getElementById('object-selector-btns').addEventListener('click', (e) => {
+                    const button = e.target.closest('button');
+                    if (button && button.dataset.index) {
+                        state.activeObjectIndex = parseInt(button.dataset.index, 10);
+                        updateUIFromState(); // Refresh the entire UI for the new active object
+                    }
+                });
+
+
                 // Mobile panel resizer logic
                 const resizerMove = (e) => {
                     e.preventDefault();
